@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bingo Cage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#122A21;
+    --bg-deep:#0D1F19;
+    --panel:#1B3B2E;
+    --panel-2:#204434;
+    --line:rgba(243,234,211,0.14);
+    --cream:#F3EAD3;
+    --cream-dim:#CFC4A8;
+    --brass:#C89B3C;
+    --brass-light:#E3BE6C;
+    --brass-dark:#8F6C25;
+    --ink:#17140F;
+    --red:#C1503C;
+    --teal:#3F7C70;
+    --slate:#4C6E8E;
+    --muted:#7FA98C;
+    --radius-lg:22px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1100px 700px at 15% -10%, #1a3a2d 0%, transparent 60%),
+      radial-gradient(900px 600px at 110% 10%, #16362a 0%, transparent 55%),
+      var(--bg);
+    color:var(--cream);
+    font-family:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height:100vh;
+    padding:40px 20px 80px;
+  }
+
+  .wrap{max-width:980px; margin:0 auto;}
+
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    margin-bottom:34px;
+    padding-bottom:22px;
+    border-bottom:1px solid var(--line);
+  }
+  header h1{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:clamp(32px, 5vw, 46px);
+    margin:0 0 8px;
+    letter-spacing:-0.01em;
+    color:var(--cream);
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:15px;
+    max-width:38ch;
+    line-height:1.5;
+  }
+  .sound-btn{
+    flex-shrink:0;
+    width:44px; height:44px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--cream);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .sound-btn:hover{border-color:var(--brass);}
+  .sound-btn:active{transform:scale(.94);}
+  .sound-btn svg{width:20px; height:20px;}
+
+  main{
+    display:grid;
+    grid-template-columns:1.05fr 1fr;
+    gap:36px;
+    align-items:start;
+  }
+  @media (max-width:760px){
+    main{grid-template-columns:1fr;}
+  }
+
+  /* ---------- CAGE ---------- */
+  .cage-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .cage-scene{
+    position:relative;
+    width:100%;
+    max-width:340px;
+    aspect-ratio:1/1.18;
+    margin-bottom:22px;
+  }
+
+  .drum-mount{
+    position:absolute;
+    left:50%;
+    top:6%;
+    width:88%;
+    aspect-ratio:1/1;
+    transform:translateX(-50%);
+  }
+
+  .drum{
+    position:relative;
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 38%, rgba(255,255,255,0.05), rgba(0,0,0,0.4) 78%),
+      repeating-linear-gradient(45deg, rgba(200,155,60,0.4) 0 2px, transparent 2px 17px),
+      repeating-linear-gradient(-45deg, rgba(200,155,60,0.4) 0 2px, transparent 2px 17px),
+      var(--bg-deep);
+    box-shadow:
+      inset 0 0 0 6px var(--brass-dark),
+      inset 0 0 0 9px rgba(227,190,108,0.35),
+      0 18px 40px rgba(0,0,0,0.45);
+    overflow:hidden;
+    transform-origin:center center;
+  }
+  .drum.spinning{
+    animation:drumSpin .6s linear infinite;
+  }
+  @keyframes drumSpin{
+    from{transform:rotate(0deg) scale(1);}
+    50%{transform:rotate(180deg) scale(1.015);}
+    to{transform:rotate(360deg) scale(1);}
+  }
+
+  .ball{
+    position:absolute;
+    width:var(--bsize, 32px);
+    height:var(--bsize, 32px);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-family:'Inter', sans-serif;
+    font-size:var(--bfont, 11px);
+    letter-spacing:-0.02em;
+    box-shadow:
+      inset -2px -3px 4px rgba(0,0,0,0.25),
+      inset 2px 3px 4px rgba(255,255,255,0.25),
+      0 2px 5px rgba(0,0,0,0.35);
+    left:var(--bx);
+    top:var(--by);
+    animation:idleBounce var(--bdur,2.4s) ease-in-out var(--bdelay,0s) infinite;
+    will-change:transform;
+  }
+  .ball.spin-fast{
+    animation:ballSpin var(--sdur,0.6s) linear infinite;
+  }
+  .ball.ejecting{
+    animation:none !important;
+    transition:transform .55s cubic-bezier(.3,.85,.35,1), opacity .5s ease .1s;
+    z-index:5;
+    opacity:0;
+  }
+  @keyframes idleBounce{
+    0%,100%{transform:translate(0,0);}
+    50%{transform:translate(var(--dx,3px), var(--dy,4px));}
+  }
+  @keyframes ballSpin{
+    0%{transform:translate(0,0);}
+    25%{transform:translate(var(--sx1,6px), var(--sy1,-8px));}
+    50%{transform:translate(var(--sx2,-8px), var(--sy2,5px));}
+    75%{transform:translate(var(--sx3,7px), var(--sy3,7px));}
+    100%{transform:translate(0,0);}
+  }
+
+  .crank{
+    position:absolute;
+    right:-9%;
+    top:50%;
+    width:26%;
+    height:10px;
+    transform-origin:0% 50%;
+    transform:translateY(-50%) rotate(0deg);
+  }
+  .crank.spinning{animation:crankSpin .6s linear infinite;}
+  @keyframes crankSpin{ to{transform:translateY(-50%) rotate(360deg);} }
+  .crank .rod{
+    position:absolute; left:0; top:50%; width:70%; height:6px;
+    background:linear-gradient(#E3BE6C, #8F6C25);
+    transform:translateY(-50%);
+    border-radius:3px;
+  }
+  .crank .knob{
+    position:absolute; right:0; top:50%; width:20px; height:20px;
+    background:radial-gradient(circle at 35% 30%, var(--brass-light), var(--brass-dark));
+    border-radius:50%;
+    transform:translate(0,-50%);
+    box-shadow:0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  .stand{
+    position:absolute;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:64%;
+    height:16%;
+    background:linear-gradient(180deg, var(--brass-dark), #5f4718);
+    clip-path:polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%);
+    box-shadow:0 10px 18px rgba(0,0,0,0.35);
+  }
+  .stand::after{
+    content:"";
+    position:absolute;
+    left:50%; top:-3px;
+    width:110%;
+    height:8px;
+    background:var(--brass-dark);
+    border-radius:4px;
+    transform:translateX(-50%);
+  }
+
+  .tray{
+    width:100%;
+    max-width:320px;
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:18px 20px 20px;
+    text-align:center;
+    box-shadow:0 12px 26px rgba(0,0,0,0.3);
+  }
+  .tray .tray-label{
+    font-size:12px;
+    color:var(--muted);
+    margin:0 0 10px;
+    letter-spacing:0.02em;
+  }
+  .tray-display{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    color:var(--brass-light);
+    line-height:1;
+    min-height:1.1em;
+    word-break:break-word;
+  }
+  .tray-display.tray-xl{font-size:56px;}
+  .tray-display.tray-lg{font-size:38px;}
+  .tray-display.tray-md{font-size:27px;}
+  .tray-display.tray-sm{font-size:19px;}
+  .tray-display.placeholder{color:var(--cream-dim); opacity:0.5;}
+  .tray-display.pop{animation:pop .45s cubic-bezier(.3,1.4,.4,1);}
+  @keyframes pop{
+    0%{transform:scale(0.5); opacity:0;}
+    65%{transform:scale(1.12); opacity:1;}
+    100%{transform:scale(1);}
+  }
+
+  .status-line{
+    margin-top:14px;
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  /* ---------- CONTROLS ---------- */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius-lg);
+    padding:22px;
+  }
+
+  .tabs{
+    display:flex;
+    gap:6px;
+    background:var(--bg-deep);
+    padding:4px;
+    border-radius:10px;
+    margin-bottom:18px;
+  }
+  .tab-btn{
+    flex:1;
+    border:none;
+    background:transparent;
+    color:var(--cream-dim);
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 6px;
+    border-radius:7px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .tab-btn.active{
+    background:var(--brass);
+    color:var(--ink);
+  }
+  .tab-btn:hover:not(.active){color:var(--cream);}
+
+  .mode-panel{display:none;}
+  .mode-panel.active{display:block;}
+
+  .field-row{
+    display:flex;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .field{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .field label{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .field input, .field select, .field textarea{
+    background:var(--bg-deep);
+    border:1px solid var(--line);
+    color:var(--cream);
+    border-radius:8px;
+    padding:9px 10px;
+    font-size:14px;
+    font-family:'Inter', sans-serif;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:2px solid var(--brass);
+    outline-offset:1px;
+  }
+  .field textarea{
+    resize:vertical;
+    min-height:96px;
+    line-height:1.5;
+  }
+  .hint{
+    font-size:12px;
+    color:var(--muted);
+    margin:0 0 14px;
+    line-height:1.5;
+  }
+  .warn{
+    font-size:12px;
+    color:var(--red);
+    margin:-6px 0 12px;
+    min-height:14px;
+  }
+
+  .apply-btn{
+    width:100%;
+    background:linear-gradient(180deg, var(--brass-light), var(--brass));
+    color:var(--ink);
+    border:none;
+    font-family:'Inter', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding:11px 14px;
+    border-radius:9px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .apply-btn:hover{box-shadow:0 6px 14px rgba(200,155,60,0.3);}
+  .apply-btn:active{transform:scale(.98);}
+
+  .current-pool{
+    margin-top:12px;
+    font-size:12.5px;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  .spin-btn{
+    width:100%;
+    margin-top:16px;
+    background:linear-gradient(180deg, #D65E48, var(--red));
+    color:var(--cream);
+    border:none;
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:19px;
+    padding:15px 14px;
+    border-radius:12px;
+    cursor:pointer;
+    box-shadow:0 10px 22px rgba(193,80,60,0.35);
+    transition:transform .12s ease, box-shadow .12s ease, opacity .15s ease;
+  }
+  .spin-btn:hover:not(:disabled){transform:translateY(-1px);}
+  .spin-btn:active:not(:disabled){transform:scale(.98);}
+  .spin-btn:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+
+  .history{
+    margin-top:20px;
+  }
+  .history h2{
+    font-family:'Fraunces', serif;
+    font-size:16px;
+    font-weight:600;
+    margin:0 0 4px;
+    color:var(--cream);
+  }
+  .history .count{
+    font-size:12.5px;
+    color:var(--muted);
+    margin:0 0 12px;
+  }
+  .chip-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    max-height:150px;
+    overflow-y:auto;
+    padding-right:2px;
+  }
+  .chip{
+    background:var(--bg-deep);
+    border:1px solid var(--line);
+    color:var(--cream);
+    font-size:12.5px;
+    padding:5px 10px;
+    border-radius:100px;
+    white-space:nowrap;
+  }
+  .chip:first-child{
+    border-color:var(--brass);
+    color:var(--brass-light);
+  }
+  .empty-note{
+    font-size:12.5px;
+    color:var(--muted);
+    font-style:italic;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ball, .drum.spinning, .crank.spinning{animation:none !important;}
+  }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px;
+    padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Bingo Cage</h1>
+      <p>Load the cage with a number range, a list of names, or a run of letters, then give it a spin.</p>
+    </div>
+    <button class="sound-btn" id="soundBtn" aria-pressed="true" aria-label="Toggle sound">
+      <svg id="soundIconOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+      <svg id="soundIconOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+    </button>
+  </header>
+
+  <main>
+    <section class="cage-col">
+      <div class="cage-scene">
+        <div class="drum-mount">
+          <div class="drum" id="drum">
+            <div id="cageBalls"></div>
+          </div>
+          <div class="crank" id="crank">
+            <div class="rod"></div>
+            <div class="knob"></div>
+          </div>
+        </div>
+        <div class="stand"></div>
+      </div>
+
+      <div class="tray">
+        <p class="tray-label">Latest draw</p>
+        <div class="tray-display tray-xl placeholder" id="trayDisplay" aria-live="polite">—</div>
+      </div>
+      <p class="status-line" id="statusLine">Cage loaded with numbers 1–30. Ready to spin.</p>
+    </section>
+
+    <section class="controls-col">
+      <div class="panel">
+        <div class="tabs" role="tablist">
+          <button class="tab-btn active" data-mode="number" role="tab" aria-selected="true">Number range</button>
+          <button class="tab-btn" data-mode="list" role="tab" aria-selected="false">Custom list</button>
+          <button class="tab-btn" data-mode="letters" role="tab" aria-selected="false">Letter range</button>
+        </div>
+
+        <div class="mode-panel active" data-panel="number">
+          <div class="field-row">
+            <div class="field">
+              <label for="numMin">From</label>
+              <input type="number" id="numMin" value="1">
+            </div>
+            <div class="field">
+              <label for="numMax">To</label>
+              <input type="number" id="numMax" value="30">
+            </div>
+          </div>
+          <p class="hint">Classic bingo cage. Defaults to 1–30 — set any range you like (up to 500 numbers).</p>
+        </div>
+
+        <div class="mode-panel" data-panel="list">
+          <div class="field">
+            <label for="listInput">Names, entries, or anything else</label>
+            <textarea id="listInput" placeholder="Alice&#10;Bob&#10;Charlie&#10;Diana"></textarea>
+          </div>
+          <p class="hint">One entry per line (commas also work). Duplicates and blank lines are ignored.</p>
+        </div>
+
+        <div class="mode-panel" data-panel="letters">
+          <div class="field-row">
+            <div class="field">
+              <label for="letMin">From</label>
+              <select id="letMin"></select>
+            </div>
+            <div class="field">
+              <label for="letMax">To</label>
+              <select id="letMax"></select>
+            </div>
+          </div>
+          <p class="hint">Draws letters instead of numbers — handy for team picks or seating order.</p>
+        </div>
+
+        <p class="warn" id="warnLine"></p>
+        <button class="apply-btn" id="applyBtn">Start new cage</button>
+        <p class="current-pool" id="currentPool">Currently loaded: numbers 1–30 (30 balls)</p>
+
+        <button class="spin-btn" id="spinBtn">Spin</button>
+      </div>
+
+      <div class="history">
+        <h2>Drawn so far</h2>
+        <p class="count" id="historyCount">0 of 30 drawn</p>
+        <div class="chip-row" id="chipRow">
+          <span class="empty-note">Nothing drawn yet.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="sr-only" id="liveRegion" aria-live="assertive"></div>
+
+<script>
+(function(){
+  const BALL_COLORS = [
+    {bg:'#F3EAD3', fg:'#1B1712'},
+    {bg:'#D8AE55', fg:'#1B1712'},
+    {bg:'#C1503C', fg:'#FBF3E2'},
+    {bg:'#3F7C70', fg:'#FBF3E2'},
+    {bg:'#4C6E8E', fg:'#FBF3E2'},
+  ];
+  const MAX_POOL = 500;
+
+  let mode = 'number';
+  let poolLabel = 'numbers 1–30';
+  let fullPool = [];   // full set as configured
+  let pool = [];        // remaining items to draw
+  let history = [];     // drawn items, latest first
+  let spinning = false;
+  let soundOn = true;
+  let audioCtx = null;
+
+  const cageBalls = document.getElementById('cageBalls');
+  const drum = document.getElementById('drum');
+  const crank = document.getElementById('crank');
+  const trayDisplay = document.getElementById('trayDisplay');
+  const statusLine = document.getElementById('statusLine');
+  const spinBtn = document.getElementById('spinBtn');
+  const applyBtn = document.getElementById('applyBtn');
+  const warnLine = document.getElementById('warnLine');
+  const currentPoolEl = document.getElementById('currentPool');
+  const historyCount = document.getElementById('historyCount');
+  const chipRow = document.getElementById('chipRow');
+  const liveRegion = document.getElementById('liveRegion');
+  const soundBtn = document.getElementById('soundBtn');
+  const soundIconOn = document.getElementById('soundIconOn');
+  const soundIconOff = document.getElementById('soundIconOff');
+
+  // ---------- letter selects ----------
+  const letMin = document.getElementById('letMin');
+  const letMax = document.getElementById('letMax');
+  for (let i = 0; i < 26; i++){
+    const ch = String.fromCharCode(65 + i);
+    const o1 = document.createElement('option'); o1.value = ch; o1.textContent = ch;
+    const o2 = document.createElement('option'); o2.value = ch; o2.textContent = ch;
+    letMin.appendChild(o1);
+    letMax.appendChild(o2);
+  }
+  letMin.value = 'A';
+  letMax.value = 'Z';
+
+  // ---------- tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected','true');
+      mode = btn.dataset.mode;
+      document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector('.mode-panel[data-panel="' + mode + '"]').classList.add('active');
+      warnLine.textContent = '';
+    });
+  });
+
+  // ---------- sound ----------
+  function ensureAudio(){
+    if (!audioCtx){
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    }
+    return audioCtx;
+  }
+  function tick(freq){
+    if (!soundOn) return;
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.08);
+  }
+  function pop(){
+    if (!soundOn) return;
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(340, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(680, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  }
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundBtn.setAttribute('aria-pressed', String(soundOn));
+    soundIconOn.style.display = soundOn ? '' : 'none';
+    soundIconOff.style.display = soundOn ? 'none' : '';
+  });
+
+  // ---------- pool building ----------
+  function parseList(text){
+    return text.split(/\r?\n|,/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
+      .filter((v, i, arr) => arr.indexOf(v) === i);
+  }
+
+  function buildPool(){
+    warnLine.textContent = '';
+    let items = [];
+    let label = '';
+
+    if (mode === 'number'){
+      let min = parseInt(document.getElementById('numMin').value, 10);
+      let max = parseInt(document.getElementById('numMax').value, 10);
+      if (isNaN(min) || isNaN(max)){
+        warnLine.textContent = 'Enter valid numbers for both fields.';
+        return null;
+      }
+      if (min > max){ const t = min; min = max; max = t; }
+      let count = max - min + 1;
+      if (count > MAX_POOL){
+        max = min + MAX_POOL - 1;
+        warnLine.textContent = 'Range clamped to ' + MAX_POOL + ' numbers for a smooth spin.';
+        count = MAX_POOL;
+      }
+      for (let n = min; n <= max; n++) items.push(String(n));
+      label = 'numbers ' + min + '–' + max;
+    }
+
+    else if (mode === 'list'){
+      items = parseList(document.getElementById('listInput').value);
+      if (items.length === 0){
+        warnLine.textContent = 'Add at least one entry, one per line.';
+        return null;
+      }
+      if (items.length > MAX_POOL){
+        warnLine.textContent = 'Only the first ' + MAX_POOL + ' entries were loaded.';
+        items = items.slice(0, MAX_POOL);
+      }
+      label = items.length + ' custom entries';
+    }
+
+    else if (mode === 'letters'){
+      let a = letMin.value.charCodeAt(0);
+      let b = letMax.value.charCodeAt(0);
+      if (a > b){ const t = a; a = b; b = t; }
+      for (let c = a; c <= b; c++) items.push(String.fromCharCode(c));
+      label = 'letters ' + String.fromCharCode(a) + '–' + String.fromCharCode(b);
+    }
+
+    return { items, label };
+  }
+
+  function applySettings(){
+    const built = buildPool();
+    if (!built) return;
+    fullPool = built.items.map((label, i) => ({
+      id: i + '-' + label,
+      label: label,
+      color: BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)]
+    }));
+    poolLabel = built.label;
+    pool = fullPool.slice();
+    history = [];
+    spinning = false;
+    trayDisplay.textContent = '—';
+    trayDisplay.className = 'tray-display tray-xl placeholder';
+    currentPoolEl.textContent = 'Currently loaded: ' + poolLabel + ' (' + fullPool.length + ' balls)';
+    updateHistoryUI();
+    renderCage();
+    updateSpinAvailability();
+    statusLine.textContent = 'Cage loaded with ' + poolLabel + '. Ready to spin.';
+  }
+
+  applyBtn.addEventListener('click', applySettings);
+
+  // ---------- rendering the cage ----------
+  function renderCage(){
+    cageBalls.innerHTML = '';
+    const n = pool.length;
+    if (n === 0) return;
+    const size = Math.max(12, Math.min(34, 210 / Math.sqrt(n)));
+    const fontSize = Math.max(7, Math.min(12, size * 0.34));
+    const placed = [];
+
+    pool.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'ball';
+      el.dataset.id = item.id;
+      el.style.setProperty('--bsize', size + 'px');
+      el.style.setProperty('--bfont', fontSize + 'px');
+      el.style.background = item.color.bg;
+      el.style.color = item.color.fg;
+
+      // rejection-sample a position inside the circle
+      let x, y, tries = 0;
+      do {
+        const angle = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random()) * (50 - (size / 2 / 3.4));
+        x = 50 + r * Math.cos(angle);
+        y = 50 + r * Math.sin(angle);
+        tries++;
+      } while (tries < 8 && placed.some(p => Math.hypot(p.x - x, p.y - y) < (size / 3.4)));
+      placed.push({x, y});
+
+      el.style.setProperty('--bx', 'calc(' + x + '% - ' + (size/2) + 'px)');
+      el.style.setProperty('--by', 'calc(' + y + '% - ' + (size/2) + 'px)');
+      el.style.setProperty('--dx', (Math.random() * 8 - 4).toFixed(1) + 'px');
+      el.style.setProperty('--dy', (Math.random() * 8 - 4).toFixed(1) + 'px');
+      el.style.setProperty('--bdur', (1.8 + Math.random() * 1.6).toFixed(2) + 's');
+      el.style.setProperty('--bdelay', (Math.random() * 1.5).toFixed(2) + 's');
+      el.style.setProperty('--sdur', (0.45 + Math.random() * 0.4).toFixed(2) + 's');
+      el.style.setProperty('--sx1', (Math.random() * 16 - 8).toFixed(1) + 'px');
+      el.style.setProperty('--sy1', (Math.random() * 16 - 8).toFixed(1) + 'px');
+      el.style.setProperty('--sx2', (Math.random() * 16 - 8).toFixed(1) + 'px');
+      el.style.setProperty('--sy2', (Math.random() * 16 - 8).toFixed(1) + 'px');
+      el.style.setProperty('--sx3', (Math.random() * 16 - 8).toFixed(1) + 'px');
+      el.style.setProperty('--sy3', (Math.random() * 16 - 8).toFixed(1) + 'px');
+
+      const shortLabel = item.label.length > 3 ? item.label.slice(0, 3) : item.label;
+      el.textContent = shortLabel;
+      cageBalls.appendChild(el);
+    });
+  }
+
+  function updateSpinAvailability(){
+    if (pool.length === 0){
+      spinBtn.disabled = true;
+      spinBtn.textContent = 'Cage empty';
+    } else {
+      spinBtn.disabled = false;
+      spinBtn.textContent = 'Spin';
+    }
+  }
+
+  function updateHistoryUI(){
+    historyCount.textContent = history.length + ' of ' + fullPool.length + ' drawn';
+    if (history.length === 0){
+      chipRow.innerHTML = '<span class="empty-note">Nothing drawn yet.</span>';
+      return;
+    }
+    chipRow.innerHTML = '';
+    history.forEach(item => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      chip.textContent = item.label;
+      chipRow.appendChild(chip);
+    });
+  }
+
+  function setTrayText(text){
+    trayDisplay.classList.remove('placeholder');
+    trayDisplay.textContent = text;
+    let sizeClass = 'tray-xl';
+    if (text.length > 18) sizeClass = 'tray-sm';
+    else if (text.length > 10) sizeClass = 'tray-md';
+    else if (text.length > 4) sizeClass = 'tray-lg';
+    trayDisplay.className = 'tray-display ' + sizeClass;
+    void trayDisplay.offsetWidth;
+    trayDisplay.classList.add('pop');
+  }
+
+  // ---------- spin sequence ----------
+  spinBtn.addEventListener('click', () => {
+    if (spinning || pool.length === 0) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    spinBtn.textContent = 'Spinning…';
+    statusLine.textContent = 'Spinning the cage…';
+    liveRegion.textContent = 'Spinning';
+
+    drum.classList.add('spinning');
+    crank.classList.add('spinning');
+    const ballEls = Array.from(cageBalls.querySelectorAll('.ball'));
+    ballEls.forEach(el => el.classList.add('spin-fast'));
+
+    let tickTimer = setInterval(() => tick(180 + Math.random() * 120), 110);
+
+    const spinDuration = 1500 + Math.random() * 500;
+
+    setTimeout(() => {
+      clearInterval(tickTimer);
+      drum.classList.remove('spinning');
+      crank.classList.remove('spinning');
+
+      const idx = Math.floor(Math.random() * pool.length);
+      const winner = pool[idx];
+      pool.splice(idx, 1);
+
+      const winnerEl = cageBalls.querySelector('.ball[data-id="' + CSS.escape(winner.id) + '"]');
+      ballEls.forEach(el => { if (el !== winnerEl) el.classList.remove('spin-fast'); });
+
+      if (winnerEl){
+        winnerEl.classList.remove('spin-fast');
+        winnerEl.classList.add('ejecting');
+        winnerEl.style.transform = 'translate(0, 260px) scale(0.6)';
+      }
+
+      pop();
+
+      setTimeout(() => {
+        history.unshift(winner);
+        setTrayText(winner.label);
+        updateHistoryUI();
+        renderCage();
+        updateSpinAvailability();
+        spinning = false;
+        statusLine.textContent = pool.length > 0
+          ? 'Drew "' + winner.label + '". ' + pool.length + ' left in the cage.'
+          : 'Drew "' + winner.label + '". The cage is now empty.';
+        liveRegion.textContent = 'Drawn: ' + winner.label;
+        if (!spinBtn.disabled) spinBtn.textContent = 'Spin';
+      }, 480);
+
+    }, spinDuration);
+  });
+
+  // init
+  applySettings();
+})();
+</script>
+</body>
+</html>
